@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
 from random import randint
+import requests
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -68,6 +69,22 @@ async def roll(interaction: discord.Interaction, dice: str):
         faces = int(infos[1])
         result = _roll(nb_dices, faces)
         await interaction.response.send_message(f"result for {nb_dices}d{faces}: {result}")
+
+
+################################################################################
+#                         test requesting dnd database                         #
+################################################################################
+
+@bot.tree.command(name="sdnd")
+@app_commands.describe(search="something to search")
+async def sdnd(interaction: discord.Interaction, search: str):
+    url = "https://www.dnd5eapi.co/api/" + "".join(search.split(' '))
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        await interaction.response.send_message(resp.text)
+    else:
+        await interaction.response.send_message("request error")
+
 
 
 bot.run(TOKEN)
