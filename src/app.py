@@ -86,5 +86,41 @@ async def sdnd(interaction: discord.Interaction, search: str):
         await interaction.response.send_message("request error")
 
 
+################################################################################
+#                     test getting user id from interaction                    #
+################################################################################
+
+@bot.tree.command(name="id")
+async def id(interaction: discord.Interaction):
+    await interaction.response.send_message(f"your id is {interaction.user.id}")
+
+
+################################################################################
+#                         test creating a text channel                         #
+################################################################################
+
+@bot.tree.command(name="createchannel", description="create a text channel")
+@app_commands.describe(name="name of the channel")
+async def createchannel(interaction: discord.Interaction, name: str):
+    guild = interaction.guild
+    channel = await guild.create_text_channel(name)
+    if channel is None:
+        await interaction.response.send_message(f"channel {name} not created")
+    else:
+        await interaction.response.send_message(f"channel {name} created")
+
+
+################################################################################
+#                 test post image from keywords in a channel                   #
+################################################################################
+
+@bot.tree.command(name="postimage", description="post image from url in a channel")
+@app_commands.describe(keywords="keywords to search pictures with")
+async def postimage(interaction: discord.Interaction, keywords: str):
+    url_to_fetch = f'https://api.unsplash.com/photos/random?query={"+".join(keywords.split(" "))}&client_id={os.getenv("UNSPLASH_ACCESS_KEY")}'
+    r = requests.get(url_to_fetch)
+    image_url = r.json()["urls"]["regular"]
+    await interaction.response.send_message(image_url)
+
 
 bot.run(TOKEN)
