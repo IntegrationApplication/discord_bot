@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 from random import randint
 import requests
+import io
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,11 +22,25 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
 async def on_ready():
-    try:
-        synced = await bot.tree.sync()
-        print(f"command synced: {synced}")
-    except Exception as e:
-        print(e)
+    print(f'{bot.user.name} has connected to Discord!')
+
+
+################################################################################
+#                                   sync tree                                  #
+################################################################################
+
+@bot.command()
+async def syncglobal(ctx):
+    print("syncing globally")
+    synced = await ctx.bot.tree.sync()
+    print(f"command synced: {synced}")
+
+
+@bot.command()
+async def synclocal(ctx):
+    print(f"syncing on  {ctx.guild}")
+    synced = await ctx.bot.tree.sync(guild=ctx.guild)
+    print(f"command synced: {synced}")
 
 ################################################################################
 #                               commande basique                               #
@@ -99,9 +114,9 @@ async def id(interaction: discord.Interaction):
 #                         test creating a text channel                         #
 ################################################################################
 
-@bot.tree.command(name="createchannel", description="create a text channel")
+@bot.tree.command(name="testcreatechannel", description="create a text channel")
 @app_commands.describe(name="name of the channel")
-async def createchannel(interaction: discord.Interaction, name: str):
+async def testcreatechannel(interaction: discord.Interaction, name: str):
     guild = interaction.guild
     channel = await guild.create_text_channel(name)
     if channel is None:
@@ -111,16 +126,29 @@ async def createchannel(interaction: discord.Interaction, name: str):
 
 
 ################################################################################
-#                 test post image from keywords in a channel                   #
+#                   post image from keywords in a channel                      #
 ################################################################################
 
-@bot.tree.command(name="postimage", description="post image from url in a channel")
-@app_commands.describe(keywords="keywords to search pictures with")
-async def postimage(interaction: discord.Interaction, keywords: str):
-    url_to_fetch = f'https://api.unsplash.com/photos/random?query={"+".join(keywords.split(" "))}&client_id={os.getenv("UNSPLASH_ACCESS_KEY")}'
-    r = requests.get(url_to_fetch)
-    image_url = r.json()["urls"]["regular"]
-    await interaction.response.send_message(image_url)
+@bot.tree.command(name="genimage", description="generate an image from keywords")
+@app_commands.describe(prompt="prompt to generate the image")
+async def genimage(interaction: discord.Interaction, prompt: str):
+    url = "https://api-inference.huggingface.co/models/openskyml/dalle-3-xl"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": f'Bearer {os.getenv("HUGGINGFACE_API_KEY")}'
+    }
+    payload = {
+        "inputs": prompt,
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    file = discord.File(io.BytesIO(response.content), filename="image.jpeg")
+    await interaction.response.send_message(file=file)
+
+
+@bot.tree.command(name="wololo", description="wololo")
+async def wololo(interaction: discord.Interaction):
+    await interaction.response.send_message("Wololooooo !")
 
 
 bot.run(TOKEN)
