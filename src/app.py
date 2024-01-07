@@ -2,15 +2,13 @@
 import os
 
 import discord
-from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
 from random import randint
+import secret
+import character_api
 import requests
 import io
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents.all()
 intents.message_content = True
@@ -62,28 +60,6 @@ async def plouf(interaction: discord.Interaction):
 @app_commands.describe(arg="string to upper")
 async def upper(interaction: discord.Interaction, arg: str):
     await interaction.response.send_message(f"upper string {arg.upper()}!")
-
-################################################################################
-#                                     test                                     #
-################################################################################
-
-def _roll(nb_dices: int, faces: int):
-    res = 0
-    for _ in range(nb_dices):
-        res += randint(1, faces)
-    return res
-
-@bot.tree.command(name="roll")
-@app_commands.describe(dice="1d20")
-async def roll(interaction: discord.Interaction, dice: str):
-    infos = dice.split('d')
-    if len(infos) != 2:
-        await interaction.response.send_message("invalid dice")
-    else:
-        nb_dices = int(infos[0])
-        faces = int(infos[1])
-        result = _roll(nb_dices, faces)
-        await interaction.response.send_message(f"result for {nb_dices}d{faces}: {result}")
 
 
 ################################################################################
@@ -150,5 +126,75 @@ async def genimage(interaction: discord.Interaction, prompt: str):
 async def wololo(interaction: discord.Interaction):
     await interaction.response.send_message("Wololooooo !")
 
+################################################################################
+#                                     roll                                     #
+################################################################################
 
-bot.run(TOKEN)
+@bot.tree.command(name="roll")
+@app_commands.describe(dice="roll a stat")
+async def roll(interaction: discord.Interaction, stat: str):
+    # TODO: get player and channel ids for the requests
+    url = character_api.rollAnyURL(1, 1, stat);
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="attack")
+@app_commands.describe(dice="attack with a weapon")
+async def roll(interaction: discord.Interaction, weaponIndex: int):
+    # TODO: get player and channel ids for the requests
+    url = character_api.rollAttackURL(1, 1, weaponIndex);
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="damage")
+@app_commands.describe(dice="make damage with a weapon")
+async def roll(interaction: discord.Interaction, weaponIndex: int):
+    # TODO: get player and channel ids for the requests
+    url = character_api.rollDamageURL(1, 1, weaponIndex);
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="init")
+@app_commands.describe(dice="roll initiative")
+async def roll(interaction: discord.Interaction):
+    # TODO: get player and channel ids for the requests
+    url = character_api.rollInitiativeURL(1, 1);
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+################################################################################
+#                        create and modify a character                         #
+################################################################################
+
+@bot.tree.command(name="modif")
+@app_commands.describe(dice="roll initiative")
+async def roll(interaction: discord.Interaction):
+    # TODO: get player and channel ids for the requests
+    outputUrl = modifyCharacterURL(1, 1)
+    await interaction.response.send_message(outputUrl)
+
+
+@bot.tree.command(name="create")
+@app_commands.describe(dice="roll initiative")
+async def roll(interaction: discord.Interaction):
+    # TODO: get player and channel ids for the requests
+
+    # create the character
+    createUrl = createCharacterURL(1, 1)
+    resp = requests.post(createUrl)
+
+    if resp.status_code == 500:
+        await interaction.response.send_message(resp.text)
+    else:
+        # output the modify url
+        outputUrl = modifyCharacterURL(1, 1)
+        await interaction.response.send_message(outputUrl)
+
+################################################################################
+#                                lauch the bot                                 #
+################################################################################
+
+bot.run(secret.TOKEN)
