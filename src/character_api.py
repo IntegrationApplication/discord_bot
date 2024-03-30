@@ -1,9 +1,10 @@
-CHARACTER_API = "https://localhost:7145/Character"
+CHARACTER_API = "http://0.0.0.0:8080/Character"
 CHARACTER_FRONT = "http://localhost:3000"
 
-################################################################################
-#                         url manipulations functions                          #
-################################################################################
+###############################################################################
+#                        url manipulations functions                          #
+###############################################################################
+
 
 def createCharacterURL(idPlayer: int, idGame: int):
     return f"{CHARACTER_API}/CreateCharacter?idPlayer={idPlayer}&idGame={idGame}"
