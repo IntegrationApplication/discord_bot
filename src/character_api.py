@@ -40,3 +40,19 @@ def rollDamageURL(idPlayer: int, idGame: int, weaponIdx: int):
 
 def modifyCharacterURL(idPlayer: int, idGame: int):
     return f"{CHARACTER_FRONT}?idPlayer={idPlayer}&idGame={idGame}"
+
+
+def listStatsURL(idPlayer: int, idGame: int):
+    return f"{CHARACTER_API}/GetStats?idPlayer={idPlayer}&idGame={idGame}"
+
+
+def listWeaponsURL(idPlayer: int, idGame: int):
+    return f"{CHARACTER_API}/GetWeapons?idPlayer={idPlayer}&idGame={idGame}"
+
+
+def listSkillsURL(idPlayer: int, idGame: int):
+    return f"{CHARACTER_API}/GetSkills?idPlayer={idPlayer}&idGame={idGame}"
+
+
+def listSavingsThrowsURL(idPlayer: int, idGame: int):
+    return f"{CHARACTER_API}/GetSavingThrows?idPlayer={idPlayer}&idGame={idGame}"

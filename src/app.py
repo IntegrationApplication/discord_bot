@@ -230,6 +230,50 @@ async def delete_character(interaction: discord.Interaction):
 
     await interaction.response.send_message("character deleted")
 
+
+###############################################################################
+#                                list commands                                #
+###############################################################################
+
+@bot.tree.command(name="stats", description="list stats")
+async def list_stats(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listStatsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="skills", description="list skills")
+async def list_skills(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listSkillsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="savings", description="list saving throws")
+async def list_savings(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listSavingsThrowsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="weapons", description="list weapons")
+async def list_weapons(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listWeaponsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
 ###############################################################################
 #                               lauch the bot                                 #
 ###############################################################################
