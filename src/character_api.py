@@ -19,7 +19,7 @@ def deleteCharacterURL(idPlayer: int, idGame: int):
 
 
 def takeDamageURL(idPlayer: int, idGame: int, amount: int):
-    return f"{CHARACTER_API}/DeleteCharacter?idPlayer={idPlayer}&idGame={idGame}&amount={amount}"
+    return f"{CHARACTER_API}/TakeDamage?idPlayer={idPlayer}&idGame={idGame}&amount={amount}"
 
 
 def rollInitiativeURL(idPlayer: int, idGame: int):
@@ -56,3 +56,7 @@ def listSkillsURL(idPlayer: int, idGame: int):
 
 def listSavingsThrowsURL(idPlayer: int, idGame: int):
     return f"{CHARACTER_API}/GetSavingThrows?idPlayer={idPlayer}&idGame={idGame}"
+
+
+def listInfosURL(idPlayer: int, idGame: int):
+    return f"{CHARACTER_API}/GetInfo?idPlayer={idPlayer}&idGame={idGame}"

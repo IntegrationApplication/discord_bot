@@ -231,6 +231,22 @@ async def delete_character(interaction: discord.Interaction):
     await interaction.response.send_message("character deleted")
 
 
+@bot.tree.command(name="bleed", description="take damage")
+@app_commands.describe(amount="amount of damage taken")
+async def bleed(interaction: discord.Interaction, amount: int):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+
+    # create the character
+    url = character_api.takeDamageURL(user_id, channel_id, amount)
+    resp = requests.put(url)
+    if resp.status_code == 200:
+        await interaction.response.send_message(
+                f"{amount} damage taken (current Hp: {resp.text})")
+    else:
+        await interaction.response.send_message(resp.text)
+
+
 ###############################################################################
 #                                list commands                                #
 ###############################################################################
@@ -270,6 +286,17 @@ async def list_weapons(interaction: discord.Interaction):
     user_id = interaction.user.id
     channel_id = interaction.channel_id
     url = character_api.listWeaponsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="infos",
+                  description="list informations on the character")
+async def list_infos(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listInfosURL(user_id, channel_id)
     resp = requests.get(url)
 
     await interaction.response.send_message(resp.text)
