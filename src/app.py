@@ -2,32 +2,36 @@
 import os
 
 import discord
-from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
-from random import randint
+# from dotenv import load_env
+import secret
+import character_api
 import requests
 import io
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+# load_env()
+# TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = secret.DISCORD_TOKEN
 
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-################################################################################
-#                                   on ready                                   #
-################################################################################
+
+###############################################################################
+#                                   on ready                                  #
+###############################################################################
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     print(f'{bot.user.name} has connected to Discord!')
 
 
-################################################################################
-#                                   sync tree                                  #
-################################################################################
+###############################################################################
+#                                   sync tree                                 #
+###############################################################################
 
 @bot.command()
 async def syncglobal(ctx):
@@ -42,9 +46,10 @@ async def synclocal(ctx):
     synced = await ctx.bot.tree.sync(guild=ctx.guild)
     print(f"command synced: {synced}")
 
-################################################################################
-#                               commande basique                               #
-################################################################################
+###############################################################################
+#                               commande basique                              #
+###############################################################################
+
 
 @bot.tree.command(name="plouf")
 async def plouf(interaction: discord.Interaction):
@@ -54,41 +59,20 @@ async def plouf(interaction: discord.Interaction):
 # async def plouf(ctx):
 #     await ctx.send("I'm happy")
 
-################################################################################
-#                                avec argument                                 #
-################################################################################
+###############################################################################
+#                                avec argument                                #
+###############################################################################
+
 
 @bot.tree.command(name="upper")
 @app_commands.describe(arg="string to upper")
 async def upper(interaction: discord.Interaction, arg: str):
     await interaction.response.send_message(f"upper string {arg.upper()}!")
 
-################################################################################
-#                                     test                                     #
-################################################################################
 
-def _roll(nb_dices: int, faces: int):
-    res = 0
-    for _ in range(nb_dices):
-        res += randint(1, faces)
-    return res
-
-@bot.tree.command(name="roll")
-@app_commands.describe(dice="1d20")
-async def roll(interaction: discord.Interaction, dice: str):
-    infos = dice.split('d')
-    if len(infos) != 2:
-        await interaction.response.send_message("invalid dice")
-    else:
-        nb_dices = int(infos[0])
-        faces = int(infos[1])
-        result = _roll(nb_dices, faces)
-        await interaction.response.send_message(f"result for {nb_dices}d{faces}: {result}")
-
-
-################################################################################
-#                         test requesting dnd database                         #
-################################################################################
+###############################################################################
+#                        test requesting dnd database                         #
+###############################################################################
 
 @bot.tree.command(name="sdnd")
 @app_commands.describe(search="something to search")
@@ -101,20 +85,21 @@ async def sdnd(interaction: discord.Interaction, search: str):
         await interaction.response.send_message("request error")
 
 
-################################################################################
-#                     test getting user id from interaction                    #
-################################################################################
+###############################################################################
+#                    test getting user id from interaction                    #
+###############################################################################
 
 @bot.tree.command(name="id")
 async def id(interaction: discord.Interaction):
-    await interaction.response.send_message(f"your id is {interaction.user.id}")
+    await interaction.response.send_message(f"Id: {interaction.user.id}")
 
 
-################################################################################
-#                         test creating a text channel                         #
-################################################################################
+###############################################################################
+#                        test creating a text channel                         #
+###############################################################################
 
-@bot.tree.command(name="testcreatechannel", description="create a text channel")
+@bot.tree.command(name="testcreatechannel",
+                  description="create a text channel")
 @app_commands.describe(name="name of the channel")
 async def testcreatechannel(interaction: discord.Interaction, name: str):
     guild = interaction.guild
@@ -125,11 +110,12 @@ async def testcreatechannel(interaction: discord.Interaction, name: str):
         await interaction.response.send_message(f"channel {name} created")
 
 
-################################################################################
-#                   post image from keywords in a channel                      #
-################################################################################
+###############################################################################
+#                  post image from keywords in a channel                      #
+###############################################################################
 
-@bot.tree.command(name="genimage", description="generate an image from keywords")
+@bot.tree.command(name="genimage",
+                  description="generate an image from keywords")
 @app_commands.describe(prompt="prompt to generate the image")
 async def genimage(interaction: discord.Interaction, prompt: str):
     url = "https://api-inference.huggingface.co/models/openskyml/dalle-3-xl"
@@ -150,5 +136,173 @@ async def genimage(interaction: discord.Interaction, prompt: str):
 async def wololo(interaction: discord.Interaction):
     await interaction.response.send_message("Wololooooo !")
 
+
+###############################################################################
+#                                    roll                                     #
+###############################################################################
+
+@bot.tree.command(name="roll", description="roll a stat")
+async def roll_any(interaction: discord.Interaction, stat: str):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.rollAnyURL(user_id, channel_id, stat)
+    print(url)
+
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="attack", description="attack attack with a weapon")
+async def roll_attack(interaction: discord.Interaction, weaponidx: int):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.rollAttackURL(user_id, channel_id, weaponidx)
+    print(url)
+
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="damage", description="roll damage with a weapon")
+async def roll_damage(interaction: discord.Interaction, weaponidx: int):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.rollDamageURL(user_id, channel_id, weaponidx)
+    print(url)
+
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="init", description="roll initiative")
+async def roll_initiative(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.rollInitiativeURL(user_id, channel_id)
+    print(url)
+
+    resp = requests.get(url)
+    await interaction.response.send_message(resp.text)
+
+
+###############################################################################
+#                       create and modify a character                         #
+###############################################################################
+
+@bot.tree.command(name="modif", description="modify character")
+async def modify_character(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    outputUrl = character_api.modifyCharacterURL(user_id, channel_id)
+    print(outputUrl)
+
+    await interaction.response.send_message(outputUrl)
+
+
+@bot.tree.command(name="create", description="create character")
+async def create_character(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+
+    # create the character
+    createUrl = character_api.createCharacterURL(user_id, channel_id)
+    print(createUrl)
+    resp = requests.post(createUrl)
+    print(resp.text)
+    print(resp.status_code)
+
+    if resp.status_code == 200:
+        # output the modify url
+        outputUrl = character_api.modifyCharacterURL(user_id, channel_id)
+        await interaction.response.send_message(outputUrl)
+    else:
+        await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="delete", description="delete character")
+async def delete_character(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    deleteUrl = character_api.deleteCharacterURL(user_id, channel_id)
+    print(deleteUrl)
+    resp = requests.delete(deleteUrl)
+    print(resp.text)
+
+    await interaction.response.send_message("character deleted")
+
+
+@bot.tree.command(name="bleed", description="take damage")
+@app_commands.describe(amount="amount of damage taken")
+async def bleed(interaction: discord.Interaction, amount: int):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+
+    # create the character
+    url = character_api.takeDamageURL(user_id, channel_id, amount)
+    resp = requests.put(url)
+    if resp.status_code == 200:
+        await interaction.response.send_message(
+                f"{amount} damage taken (current Hp: {resp.text})")
+    else:
+        await interaction.response.send_message(resp.text)
+
+
+###############################################################################
+#                                list commands                                #
+###############################################################################
+
+@bot.tree.command(name="stats", description="list stats")
+async def list_stats(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listStatsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="skills", description="list skills")
+async def list_skills(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listSkillsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="savings", description="list saving throws")
+async def list_savings(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listSavingsThrowsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="weapons", description="list weapons")
+async def list_weapons(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listWeaponsURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+
+@bot.tree.command(name="infos",
+                  description="list informations on the character")
+async def list_infos(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    channel_id = interaction.channel_id
+    url = character_api.listInfosURL(user_id, channel_id)
+    resp = requests.get(url)
+
+    await interaction.response.send_message(resp.text)
+
+###############################################################################
+#                               lauch the bot                                 #
+###############################################################################
 
 bot.run(TOKEN)
