@@ -3,7 +3,7 @@ import os
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 # from dotenv import load_env
 import secret
 import character_api
@@ -26,6 +26,7 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 @bot.event
 async def on_ready():
     await bot.tree.sync()
+    await request_img_task.start()
     print(f'{bot.user.name} has connected to Discord!')
 
 
@@ -114,22 +115,36 @@ async def testcreatechannel(interaction: discord.Interaction, name: str):
 #                  post image from keywords in a channel                      #
 ###############################################################################
 
+images_requests = []
+
+
+@tasks.loop(seconds=5.0)
+async def request_img_task():
+    # print("running task")
+    if len(images_requests) > 0:
+        (channel_id, prompt) = images_requests.pop(0)
+        channel = bot.get_channel(channel_id)
+        url = "https://api-inference.huggingface.co/models/goofyai/3d_render_style_xl"
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": f'Bearer {secret.HUGGINGFACE_API_KEY}'
+        }
+        payload = {
+            "inputs": prompt
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        print(response)
+        file = discord.File(io.BytesIO(response.content), filename="image.jpeg")
+        await channel.send(file=file)
+
+
 @bot.tree.command(name="genimage",
                   description="generate an image from keywords")
 @app_commands.describe(prompt="prompt to generate the image")
 async def genimage(interaction: discord.Interaction, prompt: str):
-    url = "https://api-inference.huggingface.co/models/openskyml/dalle-3-xl"
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "authorization": f'Bearer {os.getenv("HUGGINGFACE_API_KEY")}'
-    }
-    payload = {
-        "inputs": prompt,
-    }
-    response = requests.post(url, headers=headers, json=payload)
-    file = discord.File(io.BytesIO(response.content), filename="image.jpeg")
-    await interaction.response.send_message(file=file)
+    images_requests.append((interaction.channel_id, prompt))
+    await interaction.response.send_message("image requested")
 
 
 @bot.tree.command(name="wololo", description="wololo")
